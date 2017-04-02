@@ -1,8 +1,10 @@
 # coding: utf-8
-
-from app import app
-from flask import render_template, flash, redirect
-from forms import LoginForm
+from datetime import datetime
+from app import app, lm,db
+from models import User, ROLE_USER, ROLE_ADMIN
+from flask import render_template, flash, redirect, session, url_for, g, request
+from forms import LoginForm, SignUpForm
+from flask_login import current_user, login_required, login_user, logout_user
 
 
 @app.route('/')
@@ -27,13 +29,74 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm()
+    # 此处的current_user 为 User 类型
+    if current_user.is_authenticated():
+        return redirect('index')
 
+    # 表单验证
+    form = LoginForm()
     # 动作处理
     if form.validate_on_submit():
-        flash('Login requested for Name: ' + form.name.data)
-        flash('passwd: ' + str(form.password.data))
-        flash('remember_me: ' + str(form.remember_me.data))
-        return redirect('/index')
+        user = User.login_check(request.form.get('user_name'))
+        if user:
+            login_user(user)
+            user.last_seen = datetime.now()
+
+            try:
+                db.session.add(user)
+                db.session.commit()
+            except:
+                flash('Database Err')
+                return redirect('/login')
+            flash('Your name: ' + request.form.get('user_name'))
+            flash('remember me? ' + str(request.form.get('remember_me')))
+            return redirect(url_for('users', user_id=current_user.id))
+        else:
+            flash('Login Failed, name not exist')
+            return redirect('/login')
 
     return render_template('login.html', title='Sign In', form=form)
+
+
+@lm.user_loader
+def user_loader(user_id):
+    return User.query.get(int(user_id))
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("You've logged out")
+    redirect(url_for('index'))
+
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    form = SignUpForm()
+    user = User()
+    if form.validate_on_submit():
+        user_name = request.form.get('user_name')
+        user_email = request.form.get('user_email')
+        password = request.form.get('password')
+
+        check = User.query.filter(db.or_(
+            User.nickname == user_name, User.email == user_email)).first()
+        if check:
+            flash('Already Exist')
+            return redirect('/signup')
+
+        if len(user_name) and len(user_email):
+            user.nickname = user_name
+            user.email = user_email
+            user.role = ROLE_USER
+            try:
+                db.session.add(user)
+                db.session.commit()
+            except:
+                flash('DB Err')
+                return redirect('signup')
+
+            flash('Signup Success')
+            return redirect('/index')
+    return render_template('signup.html', form=form)
