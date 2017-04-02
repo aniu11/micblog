@@ -1,0 +1,96 @@
+PyDev
+console: starting.
+import sys;
+
+print('Python %s on %s' % (sys.version, sys.platform))
+sys.path.extend(['/home/leo/PycharmProjects/micblog'])
+Python
+2.7
+.12(default, Nov
+19
+2016, 06:48:10)
+[GCC 5.4.0 20160609]
+on
+linux2
+from app import db
+from app.models import User, Post, ROLE_USER, ROLE_ADMIN
+
+u1 = User(nickname='john', email='john@email.com', role=ROLE_USER)
+db.session.add(u1)
+db.session.commit()
+u2 = User(nickname='susan', email='susan@email.com', role=ROLE_USER)
+db.session.add(u2)
+db.session.commit()
+users = User.query.all()
+print users
+[ < User
+u'john' >, < User
+u'susan' >]
+for u in users:
+    print u.id, u.nickname
+
+1
+john
+2
+susan
+u = User.query.get(1)
+print u
+< User
+u'john' >
+import datetime
+
+p = Post(body='my first post!', timestamp=datetime.datetime.utcnow(), author=u)
+db.session.add(p)
+db.session.commit()
+print u.posts
+SELECT
+post.id
+AS
+post_id, post.body
+AS
+post_body, post.timestamp
+AS
+post_timestamp, post.user_id
+AS
+post_user_id
+FROM
+post
+WHERE:param_1 = post.user_id
+print u.posts.all()
+[ < Post
+u'my first post!' >]
+print User.query.order_by('nickname desc')
+SELECT
+"user".id
+AS
+user_id, "user".nickname
+AS
+user_nickname, "user".email
+AS
+user_email, "user".role
+AS
+user_role
+FROM
+"user"
+ORDER
+BY
+nickname
+desc
+print User.query.order_by('nickname desc').all()
+[ < User
+u'susan' >, < User
+u'john' >]
+users = User.query.all()
+for u in users:
+    db.session.delete(u)
+
+posts = Post.query.all()
+for p in posts:
+    db.session.delete(p)
+
+db.session.commit()
+print User.query.all()
+[]
+
+print Post.query.all()
+[]
