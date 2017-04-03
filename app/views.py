@@ -5,6 +5,7 @@ from models import User, Post, ROLE_USER, ROLE_ADMIN
 from flask import render_template, flash, redirect, session, url_for, g, request
 from forms import LoginForm, SignUpForm, AboutMeForm, PublishBlogForm
 from flask_login import current_user, login_required, login_user, logout_user
+from utils import PER_PAGE
 
 
 @app.route('/')
@@ -104,16 +105,24 @@ def signup():
     return render_template('signup.html', form=form)
 
 
-@app.route('/user/<int:user_id>', methods=['GET', 'POST'])
+@app.route('/user/<int:user_id>', defaults={'page': 1}, methods=['GET', 'POST'])
+@app.route('/user/<int:user_id>/page/<int:page>', methods=['GET', 'POST'])
 @login_required
-def users(user_id):
+def users(user_id, page):
     form = AboutMeForm()
+    if user_id != current_user.id:
+        flash('You can only visit your own profile')
+        return redirect(url_for('index'))
+
     user = User.query.filter(User.id == user_id).first()
     if not user:
         flash('user not exist')
         return redirect('/index')
-    blogs = user.posts.all()
-    return render_template('user.html', form=form, user=user, blogs=blogs)
+
+    # blogs = user.paginate(page, PER_PAGE, False).items
+    pagination = Post.query.filter(user_id == current_user.id)\
+        .order_by(db.desc(Post.timestamp)).paginate(page, PER_PAGE, False)
+    return render_template('user.html', form=form, user=user, pagination=pagination)
 
 
 @app.route('/publish/<int:user_id>', methods=['GET', 'POST'])
