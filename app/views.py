@@ -1,9 +1,9 @@
 # coding: utf-8
 from datetime import datetime
 from app import app, lm,db
-from models import User, ROLE_USER, ROLE_ADMIN
+from models import User, Post, ROLE_USER, ROLE_ADMIN
 from flask import render_template, flash, redirect, session, url_for, g, request
-from forms import LoginForm, SignUpForm, AboutMeForm
+from forms import LoginForm, SignUpForm, AboutMeForm, PublishBlogForm
 from flask_login import current_user, login_required, login_user, logout_user
 
 
@@ -115,3 +115,45 @@ def users(user_id):
     blogs = user.posts.all()
     return render_template('user.html', form=form, user=user, blogs=blogs)
 
+
+@app.route('/publish/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def publish(user_id):
+    form = PublishBlogForm()
+    posts = Post()
+    if form.validate_on_submit():
+        content = request.form.get('body')
+        if not len(str(content).strip()):
+            flash('content required !')
+            return redirect(url_for('publish', user_id=user_id))
+        posts.body = content
+        posts.timestamp = datetime.now()
+        posts.user_id = user_id
+
+        try:
+            db.session.add(posts)
+            db.session.commit()
+        except:
+            flash('DB Err')
+            return redirect(url_for('publish', user_id=user_id))
+
+    return render_template('publish.html', form=form)
+
+
+@app.route('/about-me/<int:user_id>', methods=['POST'])
+@login_required
+def about_me(user_id):
+    user = User.query.filter(User.id == user_id).first()
+    if request.method == 'POST':
+        content = request.form.get('describe')
+        if len(content) and len(content) < 140:
+            user.about_me = content
+            try:
+                db.session.add(user)
+                db.session.commit()
+            except:
+                flash('DB Err')
+                return redirect(url_for('users', user_id=user_id))
+        else:
+            flash('maybe something wrong with your input')
+    return redirect(url_for('users', user_id=user_id))

@@ -32,3 +32,12 @@ class AboutMeForm(Form):
     describe = TextAreaField('about me', validators=[DataRequired(), Length(max=140)])
     submit = SubmitField('Yes')
 
+
+class PublishBlogForm(Form):
+    """
+    博客发布表单
+    """
+    body = TextAreaField('blog content', validators=[DataRequired()])
+    submit = SubmitField('submit')
+
+

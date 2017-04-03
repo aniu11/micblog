@@ -11,7 +11,8 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True)
     role = db.Column(db.SmallInteger, default=ROLE_USER)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
-
+    about_me = db.Column(db.String(140))
+    last_seen = db.Column(db.DateTime)
     # classmethod & static method https://www.zhihu.com/question/20021164
     @classmethod
     def login_check(cls, username):
