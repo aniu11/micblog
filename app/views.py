@@ -3,13 +3,15 @@ from datetime import datetime
 from app import app, lm,db
 from models import User, ROLE_USER, ROLE_ADMIN
 from flask import render_template, flash, redirect, session, url_for, g, request
-from forms import LoginForm, SignUpForm
+from forms import LoginForm, SignUpForm, AboutMeForm
 from flask_login import current_user, login_required, login_user, logout_user
 
 
 @app.route('/')
 @app.route('/index')
 def index():
+    # app.logger.debug(current_user.is_authenticated())
+    # app.logger.debug(current_user.is_anonymous())
     user = {'nickname': 'Miguel'}  # 用户名
     posts = [  # 提交内容
         {
@@ -54,7 +56,7 @@ def login():
         else:
             flash('Login Failed, name not exist')
             return redirect('/login')
-
+    app.logger.debug(form.errors)
     return render_template('login.html', title='Sign In', form=form)
 
 
@@ -68,7 +70,7 @@ def user_loader(user_id):
 def logout():
     logout_user()
     flash("You've logged out")
-    redirect(url_for('index'))
+    return redirect(url_for('index'))
 
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -100,3 +102,16 @@ def signup():
             flash('Signup Success')
             return redirect('/index')
     return render_template('signup.html', form=form)
+
+
+@app.route('/user/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def users(user_id):
+    form = AboutMeForm()
+    user = User.query.filter(User.id == user_id).first()
+    if not user:
+        flash('user not exist')
+        return redirect('/index')
+    blogs = user.posts.all()
+    return render_template('user.html', form=form, user=user, blogs=blogs)
+

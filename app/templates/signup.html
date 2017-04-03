@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<form action="/sign-up", method="POST" name="sign_up">
+<form action="/signup", method="POST" name="sign_up">
     {{ form.hidden_tag() }}
     <p>Nick name: {{ form.user_name }}</p>
     {% for error in form.errors.user_name %}

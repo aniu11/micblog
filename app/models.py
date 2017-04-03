@@ -1,34 +1,21 @@
 # coding: utf-8
 from app import db
-
+from flask_login import UserMixin
 ROLE_USER = 0
 ROLE_ADMIN = 1
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     nickname = db.Column(db.String(64), unique=True)
     email = db.Column(db.String(120), unique=True)
     role = db.Column(db.SmallInteger, default=ROLE_USER)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
 
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return unicode(self.id)
-
     # classmethod & static method https://www.zhihu.com/question/20021164
     @classmethod
     def login_check(cls, username):
-        user = cls.query.filter(db._or(User.nickname == username, User.email == username)).first()
-
+        user = cls.query.filter(User.nickname == username).first()
         if not user:
             return None
         return user
