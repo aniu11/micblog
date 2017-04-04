@@ -9,6 +9,7 @@ class LoginForm(Form):
     """
     登录表单 包括用户名密码和是否记住
     """
+    # 变量名作为request.form.var使用 第一个参数是提示
     user_name = StringField('user_name', validators=[DataRequired(), Length(max=15)])
     password = PasswordField('password', validators=[DataRequired()])
     remember_me = BooleanField('remember_me', default=False)

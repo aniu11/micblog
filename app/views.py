@@ -146,6 +146,9 @@ def publish(user_id):
             flash('DB Err')
             return redirect(url_for('publish', user_id=user_id))
 
+        flash('Post Published')
+        return redirect(url_for('publish', user_id=user_id))
+
     return render_template('publish.html', form=form)
 
 
